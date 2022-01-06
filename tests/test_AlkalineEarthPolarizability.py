@@ -59,7 +59,7 @@ class AlkalineEarthPolarizability(unittest.TestCase):
         U_AE = alkaline_earth_core_ac_stark(state_c, state_r, j, mj, epsilon, beam)
 
         # Calculate the ac Stark shift using the alkali atom function
-        U_A = alkali_core_ac_stark(state_c, mj, beam, epsilon, ureg)
+        U_A = alkali_core_ac_stark(state_c, mj, beam, epsilon)
 
         # Calculate the difference
         diff = U_AE - U_A
