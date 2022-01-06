@@ -6,6 +6,7 @@ from atomphys.state import State
 from atomphys import Atom, Laser
 
 # Import the functions to test
+from StarkShift import GaussianBeam
 from StarkShift import alkali_core_polarizability
 
 # Set up logging
@@ -18,11 +19,20 @@ ureg = pint.UnitRegistry()
 # Define the atomphys atom
 ap_atom = Atom('Ca+', ureg=ureg)
 
+
+# Define the laser properties
+P = 100 * ureg('mW')                    # Beam power
+lam = 1180 * ureg('nm')                 # Wavelength
+k = 2*np.pi / lam * np.array([0, 0, 1]) # k-vector
+w0 = 2 * ureg('um')                     # Beam waist
+r0 = np.array([0, 0, 0]) * ureg('mm')   # Position of the waist
+
+# Define the laser beam
+beam = GaussianBeam(P, k, w0, r0, ureg)
+
 # Define the atomphys laser
-I = 1*ureg('mW/cm**2')
-lam = 1000 * ureg('nm')
-omega = 2*np.pi * ureg('c') / lam 
 ap_laser = Laser(units=ureg, λ=np.linspace(lam.to('nm').magnitude, lam.to('nm').magnitude + 1, 1) * ureg.nm, A=0)
+
 
 
 # Define the testcase
@@ -43,7 +53,7 @@ class TestAlkaliCorePolarizability(unittest.TestCase):
             # Calculate the polarizability using atomphys
             alpha_ap = ap_state.α(mJ=mj1, laser=ap_laser, theta_k=theta_k, theta_p=theta_p)[0].to('e * a_u_length / a_u_electric_field')
             # Calculate the polarizability using StarkShift
-            alpha = alkali_core_polarizability(ap_state, mj1, omega, epsilon, ureg)
+            alpha = alkali_core_polarizability(ap_state, mj1, beam, epsilon)
             # Calculate the difference
             diff = np.abs(alpha - alpha_ap)
 

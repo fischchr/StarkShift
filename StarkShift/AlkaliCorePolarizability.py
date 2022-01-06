@@ -3,6 +3,7 @@ import numpy as np
 from sympy import sympify, sqrt
 from sympy.physics.wigner import clebsch_gordan, wigner_6j
 from .PolarizationUtil import cart_to_sph, evaluate_vector_description, get_sph_components
+from .AxialBeams import AxialBeam
 
 ### Helper functions ###
 def sympify_angular_momentum(j: float) -> float:
@@ -107,7 +108,7 @@ def alpha_j(state_i: State, omega: float, k: int, ureg):
     return float(sqrt(2*k + 1) * res)
 
 
-def alkali_core_polarizability(state_i: State, mj: float, omega: float, epsilon: str, ureg) -> float:
+def alkali_core_polarizability(state_i: State, mj: float, beam: AxialBeam, epsilon: str) -> float:
     """Calculate the polarizability in SI units using eq. (3.21)
     The unit of the polarizability is (e * a0 / (V/cm)) = (e * a0)^2 / E_h.
 
@@ -119,10 +120,12 @@ def alkali_core_polarizability(state_i: State, mj: float, omega: float, epsilon:
     # Arguments
     * state_i::State - atomphys.State object of the state of interest.
     * mj::float - Magnetic quantum number of the state.
-    * omega::float - Angular frequency of the laser in SI units.
+    * beam::AxialBeam - Representation of the laser beam.
     * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
-    * ureg::Unitregistry - Unit registry.
     """
+
+    # Get the unit registry
+    ureg = beam.units
     
     # Get the angular momentum of state_i
     j_i = sympify(f'{2*state_i.J:.0f} / 2')
@@ -133,31 +136,31 @@ def alkali_core_polarizability(state_i: State, mj: float, omega: float, epsilon:
     for k in range(3):
         res += clebsch_gordan(j_i, k, j_i, mj, 0, mj) / sqrt(2*j_i + 1) * \
                polarization_factor(epsilon, k) * \
-               alpha_j(state_i, omega, k, ureg)
+               alpha_j(state_i, beam.omega, k, ureg)
 
     # alpha_j has the opposite sign to the usual definition.
     return - float(res) * ureg('e') * ureg('a_u_length') / ureg('a_u_electric_field')
 
 
-def alkali_core_ac_stark(state_i: State, mj: float, I: float, omega: float, epsilon: str, ureg):
+def alkali_core_ac_stark(state_i: State, mj: float, beam: AxialBeam, epsilon: str):
     """Calculate the ac Stark shift in SI units (J) using eq. (3.20)
 
     # Arguments
     * state_i::State - atomphys.State object of the state of interest.
     * mj::float - Magnetic quantum number of the state.
-    * I::Intensity of the laser in SI units.
-    * omega::float - Angular frequency of the laser in SI units.
+    * beam::AxialBeam - Representation of the laser beam.
     * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
-    * ureg::Unitregistry - Unit registry.
     """
 
+    # Get the unit registry
+    ureg = beam.units
     
     # You could calculate the electric field 
     #E_0 = np.sqrt(2 * I / (ureg('epsilon_0') * ureg('c')))
     
     # Or use the formula for the Stark shift with the intensity
     # Note the minus sign here and in alkali_core_polarizability compared to eq. (3.20) and (3.21).
-    return - I / (2 * ureg('c * epsilon_0')) * alkali_core_polarizability(state_i, mj, omega, epsilon, ureg)
+    return - beam.I0 / (2 * ureg('c * epsilon_0')) * alkali_core_polarizability(state_i, mj, beam, epsilon)
 
 
 if __name__ == "__main__":

@@ -48,8 +48,6 @@ class AlkalineEarthPolarizability(unittest.TestCase):
         # Define the core state
         state_c = ap_atom('S1/2')
 
-        # Define the ARC atom (for testing it doesn't matter that it's not the same as the atom phys atom)
-        arc_atom = Potassium()
         # Define the Rydberg state
         state_r = (0, 0, 0, 0, 0)
 
@@ -61,7 +59,7 @@ class AlkalineEarthPolarizability(unittest.TestCase):
         U_AE = alkaline_earth_core_ac_stark(state_c, state_r, j, mj, epsilon, beam)
 
         # Calculate the ac Stark shift using the alkali atom function
-        U_A = alkali_core_ac_stark(state_c, mj, beam.I0, beam.omega, epsilon, ureg)
+        U_A = alkali_core_ac_stark(state_c, mj, beam, epsilon, ureg)
 
         # Calculate the difference
         diff = U_AE - U_A

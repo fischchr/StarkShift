@@ -523,6 +523,10 @@ class BottleBeam(AxialBeam):
         
         return self.I0 * self._I_interpolation(x)
 
+    @property
+    def I0(self):
+        return self.eval_beam_coordinates(np.array([0]), np.array([0]))[0]
+
 
 if __name__ == "__main__":
     pass 
