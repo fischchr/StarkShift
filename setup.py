@@ -22,6 +22,8 @@ setuptools.setup(
         'numpy',
         'scipy',
         'sympy',
+        'pint',
+        'pyshtools',
         'atomphys',
         'ARC-Alkali-Rydberg-Calculator'
     ],
