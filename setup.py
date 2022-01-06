@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.9.0",
     author="Christoph Fischer",
     author_email="fischchr@phys.ethz.ch",
-    description="A module for calculating ac Stark shifts on alkali and alkakine-earth atoms.",
+    description="A module for calculating ac Stark shifts on alkali and alkaline-earth atoms.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="git+https://gitlab.ethz.ch/tiqi-projects/optical-trap/StarkShift",
