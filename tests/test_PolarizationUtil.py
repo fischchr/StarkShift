@@ -25,28 +25,36 @@ class TestPolarizationUtil(unittest.TestCase):
         self.assertTrue(mag < eps)
 
     def _check_cart(self, polarization: str, res_xyz: np.ndarray):
-        """Check the evaluation in caresian coordinates. """
+        """Check the evaluation in caresian coordinates. 
+        Used for testing `evaluate_vector_description`.
+        """
 
         eps_xyz = evaluate_vector_description(polarization)
         logging.info(f'Evaluated {polarization=} to {eps_xyz=}. Should be {res_xyz=}')
         self._check_difference(eps_xyz, res_xyz)
 
     def _check_sph(self, polarization: str, res_sph: np.ndarray):
-        """Check the evaluation in spherical coordinates. """
+        """Check the evaluation in spherical coordinates. 
+        Used for testing the combination of `evaluate_vector_description` and `cart_to_sph`.
+        """
         
         eps_xyz = evaluate_vector_description(polarization)
         eps_sph = cart_to_sph(eps_xyz)
         self._check_difference(eps_sph, res_sph)
 
     def _check_conversion(self, eps_xyz):
-        """ Check conversion between cartesian and spherical coordinates in both ways. """
+        """ Check conversion between cartesian and spherical coordinates in both ways. 
+        Used for testing `cart_to_sph` and `sph_to_cart`.
+        """
 
         eps_sph = cart_to_sph(eps_xyz)
         eps_xyz_2 = sph_to_cart(eps_sph)
         self._check_difference(eps_xyz, eps_xyz_2)
 
     def _check_transformed_vectors(self, e_p: np.ndarray, e_q: np.ndarray, res: np.ndarray):
-        """Transform polarization vectors and check the result. """
+        """Transform polarization vectors and check the result. 
+        Used for testing `transform_polarization`. 
+        """
 
         # Transform the polarization vector
         e_p_prime = transform_polarization(e_p, e_q)
@@ -55,8 +63,7 @@ class TestPolarizationUtil(unittest.TestCase):
         logging.info(f'Evaluated {e_p=} to {e_p_prime} ({e_p=}). Should be {res=}')
 
         # Check the result
-        diff = e_p_prime - res
-        self.assertTrue(np.sum(diff * diff.conj()) < 1e-12)
+        self._check_difference(e_p_prime, res)
 
     # Test cases
     def test_linear_polarization(self):
