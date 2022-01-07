@@ -1,6 +1,7 @@
 import re
 import numpy as np
 import logging
+from .AxialBeams import AxialBeam
 
 
 ### Code for turning a text description of a polarization into a vector ###
@@ -416,6 +417,28 @@ def transform_polarization(e_p: np.ndarray, e_q: np.ndarray):
     assert np.sum(diff * diff.conj()) < 1e-12, 'The rotation went wrong...'
 
     return e_p_prime
+
+
+def get_polarization_vector(epsilon: str, e_q_xyz: np.ndarray = None) -> np.ndarray:
+    """Get the polarization vector in the reference defined by the quantization axis `e_q_xyz`.
+
+    # Arguments
+    * epsilon::str - Description of the polarization vector in cartesian coordinates. 
+    * e_q_xyz::vector(3) - Quantization axis in cartesian coordinates.
+
+    # Returns 
+    * e_p_sph::vector(3) - Polarization vector in the spherical coordinate system defined by `e_q_xyz`.
+    """
+
+    
+    # Get the polarization vector in cartesian coordinates
+    e_p_xyz = evaluate_vector_description(epsilon)
+
+    # Transform the polarization vector to the coordinate system defined by the quantization axis
+    e_p_prime_xyz = transform_polarization(e_p_xyz, e_q_xyz)
+    
+    # Transform e_p to spherical coordinates
+    return cart_to_sph(e_p_prime_xyz)
 
 
 if __name__ == '__main__':
