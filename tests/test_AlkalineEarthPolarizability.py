@@ -39,7 +39,7 @@ theta_p = np.pi / 2
 class AlkalineEarthPolarizability(unittest.TestCase):
     """Test the calculation of the polarizability of a Rydberg state of an alkaline-earth atom. """
 
-    # Test cases
+    ### Test cases ###
     def test_alkaline_earth_core_ac_stark(self):
         """Check that `alkaline_earth_core_ac_stark` gives the same result as the alkali atom function when l2=s2=0. """
 

@@ -44,9 +44,18 @@ class TestAlkaliCorePolarizability(unittest.TestCase):
 
         self.test_configurations = [('S', 1/2), ('P', 1/2), ('P', 3/2), ('D', 3/2), ('D', 5/2)]
 
-    # Helper functions
+    ### Helper functions ###
     def _compare_polarizability(self, ap_state: State, j1: float, epsilon: str, theta_p: float, theta_k: float):
-        """Function for comparing the polarizability of all mj states of one configuration. """
+        """Function for comparing the polarizability of all mj states of one configuration. 
+        
+        # Arguments
+        * ap_state::State - Atomphys state.
+        * j1::float - Angular momentum.
+        * mj1::float - Magnetic quantum number.
+        * epsilon::str - Sting describing the polarization of the laser
+        * theta_p::float - Angle between the quantization axis and the polarization vector.
+        * theta_k::float - Angle between k vector and the quantization axis.
+        """
 
         # Iterate over all possible values of mj
         for mj1 in [1/2 + i for i in range(int(j1 + 1/2))]:
@@ -67,7 +76,7 @@ class TestAlkaliCorePolarizability(unittest.TestCase):
             # Check the difference
             self.assertTrue(diff < 1e-3 * ureg('e * a_0 / a_u_electric_field'))
 
-    # Test cases
+    ### Test cases ###
     def test_alkali_core_polarizability_z_polarization(self):
         """Test `alkali_core_polarizability` for z polarization (theta_p = 0). """
 

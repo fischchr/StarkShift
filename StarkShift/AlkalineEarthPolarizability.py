@@ -11,6 +11,7 @@ from atomphys import State
 from .AxialBeams import AxialBeam
 from arc import AlkaliAtom
 
+from .PolarizationUtil import get_polarization_vector
 from .AlkaliCorePolarizability import alpha_j, polarization_factor, sympify_angular_momentum
 from .AlkaliRydbergPolarizability import evaluate_wave_function, get_radial_integral
 from .SphericalExpansion import SphericalBeamExpansion
@@ -39,7 +40,7 @@ def get_j2(state_r: tuple) -> float:
 
 
 ### Core electron calculations ###
-def alkaline_earth_core_ac_stark(state_c: State, state_r: tuple, j: float, mj: float, epsilon: str, beam: AxialBeam) -> float:
+def alkaline_earth_core_ac_stark(state_c: State, state_r: tuple, j: float, mj: float, epsilon: str, beam: AxialBeam, e_q_xyz: np.ndarray = None) -> float:
     """Calculate the contribution on the ac Stark shift from the core electron in SI units. 
     
     # Arguments
@@ -49,6 +50,7 @@ def alkaline_earth_core_ac_stark(state_c: State, state_r: tuple, j: float, mj: f
     * mj::float - Total magnetic quantum number m_j.
     * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
     * beam::AxialBeam - Trapping beam object.
+    * e_q_xyz::vector(3) - Quantization axis in carthesian coordinates. If not defined, the quantization axis is set by the k-vector of the laser.
     """
 
     # Get the unit registry
@@ -59,10 +61,10 @@ def alkaline_earth_core_ac_stark(state_c: State, state_r: tuple, j: float, mj: f
     I = beam.I(*r)[0]
 
     # Note that the polarizability is defined here with an additional minus sign compared to eq. (3.40)
-    return - I / (2 * ureg('c * epsilon_0')) * alkaline_earth_core_polarizability(state_c, state_r, j, mj, beam.omega, epsilon, ureg)
+    return - I / (2 * ureg('c * epsilon_0')) * alkaline_earth_core_polarizability(state_c, state_r, j, mj, beam, epsilon, e_q_xyz)
 
 
-def alkaline_earth_core_polarizability(state_c: State, state_r: tuple, j: float, mj: float, omega: float, epsilon: str, ureg: UnitRegistry) -> float:
+def alkaline_earth_core_polarizability(state_c: State, state_r: tuple, j: float, mj: float, beam: AxialBeam, epsilon: str, e_q_xyz: np.ndarray = None) -> float:
     """Calculate the polarizability of the core electroin SI units (e * a0 / (V/cm)) based on eq. (3.40).
     The polarizability (eq. 3.39) is evaluated using the alkali atom function `alpha_j`. 
     
@@ -76,10 +78,21 @@ def alkaline_earth_core_polarizability(state_c: State, state_r: tuple, j: float,
     * state_r::tuple(5) - Rydberg state (n, s, l, j, mj).
     * j::float - Total angular momentum j.
     * mj::float - Total magnetic quantum number m_j.
-    * omega::float - Angular frequency of the laser in SI units.
+    * beam::AxialBeam - Representation of the beam.
     * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
-    * ureg::Unitregistry - Unit registry.
+    * e_q_xyz::vector(3) - Quantization axis in carthesian coordinates. If not defined, the quantization axis is set by the k-vector of the laser.
     """
+
+    # Calculate the polarization vector in the spherical coordinates
+    if e_q_xyz is None:
+        # The quantization axis is defined by the laser beam
+        e_p_sph = get_polarization_vector(epsilon, beam.k_hat)
+    else:
+        # The quantization axis is defined by e_q_xyz
+        e_p_sph = get_polarization_vector(epsilon, e_q_xyz)
+
+    # Get the unit registry
+    ureg = beam.units
     
     # Get the angular momentum of the core electron
     j1 = get_j1(state_c)
@@ -100,8 +113,8 @@ def alkaline_earth_core_polarizability(state_c: State, state_r: tuple, j: float,
         res += sign * sqrt(2*j + 1) * \
                 clebsch_gordan(j, k, j, mj, 0, mj) * \
                 wigner_6j(j1, k, j1, j, j2, j) * \
-                polarization_factor(epsilon, k) * \
-                alpha_j(state_c, omega, k, ureg)
+                polarization_factor(e_p_sph, k) * \
+                alpha_j(state_c, beam.omega, k, ureg)
     
     # Note that the polarizability is defined here with an additional minus sign compared to eq. (3.40)
     # This minus sign is added here and in `alkaline_earth_core_ac_stark`
@@ -213,7 +226,8 @@ def alkaline_earth_rydberg_polarizability(state_c: State, state_r: tuple, j: flo
 
 # Total stark shift
 def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float, 
-                            beam: AxialBeam, epsilon:str, N_r: int = 100, N_theta: int = 250, L_max: int = 15, 
+                            beam: AxialBeam, epsilon:str, e_q_xyz: np.ndarray = None,
+                            N_r: int = 100, N_theta: int = 250, L_max: int = 15, 
                             arc_atom: AlkaliAtom = None, r_v: np.ndarray = None, R_eval: np.ndarray = None):
     """Calculate the ac Stark shift in SI units (J). 
 
@@ -224,6 +238,7 @@ def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float,
     * mj::float - Total magnetic quantum number m_j.
     * beam::AxialBeam - Representation of the beam.
     * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
+    * e_q_xyz::vector(3) - Quantization axis in carthesian coordinates. If not defined, the quantization axis is set by the k-vector of the laser.
     * N_r::int - Number of radial grid points.
     * N_theta::int - Number of grid points (altitude). The number of azimuthal grid points N_phi = 2 * N_theta
     * L_max::int - Order of expansion in spherical harmonics Y_{l,m}.
@@ -243,7 +258,7 @@ def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float,
     beam_expansion = SphericalBeamExpansion(beam, N_r, N_theta, L_max, r_i, r_o)
 
     # Calculate the contribution of the core electron
-    U_core = alkaline_earth_core_ac_stark(state_c, state_r, j, mj, epsilon, beam)
+    U_core = alkaline_earth_core_ac_stark(state_c, state_r, j, mj, epsilon, beam, e_q_xyz)
     # Calculate the contribution of the Rydberg electron
     U_rydberg = alkaline_earth_rydberg_ac_stark(state_c, state_r, j, mj, beam_expansion, arc_atom, r_v, R_eval)
 

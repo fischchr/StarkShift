@@ -36,9 +36,15 @@ class TestAlkaliRydbergPolarizability(unittest.TestCase):
             (50, 0, 2, 2),
         ]
 
-    # Helper functions
+    ### Helper functions ###
     def _compare_polarizability(self, configuration: tuple, beam_expansion: SphericalBeamExpansion, rel_err_tol: float):
-        """Function for comparing the polarizability of all mj states of one configuration. """
+        """Function for comparing the polarizability of all mj states of one configuration. 
+        
+        # Arguments
+        * configuration::tuple(4) - Configuration (n2, s2, l2, j2) of the electron.
+        * beam_expansion::SphericalBeamExpansion - Expansion of the beam.
+        * rel_err_tol::float - Maximum residual error to pass the test.
+        """
 
         # Get the configuration
         n2, s2, l2, j2 = configuration
@@ -82,7 +88,7 @@ class TestAlkaliRydbergPolarizability(unittest.TestCase):
             # because the beam intensity of the Gaussian beam is falling off to the sides compared to a plane wave.
             self.assertTrue(alpha_p < alpha)   
 
-    # Test cases
+    ### Test cases ###
     def test_alkali_rydberg_polarizability_large_beam(self):
         """Test `alkali_rydberg_polarizability` for a large beam where the beam can be approximated to be constant over the extent of the Rydberg wave function. """
 
