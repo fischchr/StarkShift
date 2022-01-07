@@ -19,13 +19,13 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        'numpy',
-        'scipy',
-        'sympy',
-        'pint',
-        'pyshtools',
-        'atomphys',
-        'ARC-Alkali-Rydberg-Calculator'
+        'numpy>=1.19',
+        'scipy>=1.6',
+        'sympy>=1.7',
+        'pint>=0.16',
+        'pyshtools>=4.7',
+        'atomphys>=0.0.4',
+        'ARC-Alkali-Rydberg-Calculator>=3.0'
     ],
     zip_safe=False
 )
