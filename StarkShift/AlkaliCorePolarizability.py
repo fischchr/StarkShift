@@ -2,7 +2,7 @@ from atomphys import Atom, Laser, Transition, State
 import numpy as np
 from sympy import sympify, sqrt
 from sympy.physics.wigner import clebsch_gordan, wigner_6j
-from .PolarizationUtil import cart_to_sph, evaluate_vector_description, get_sph_components
+from .PolarizationUtil import get_sph_components, get_polarization_vector
 from .AxialBeams import AxialBeam
 
 ### Helper functions ###
@@ -12,21 +12,16 @@ def sympify_angular_momentum(j: float) -> float:
     return sympify(f'{2 * j:.0f} / 2')
 
     
-def polarization_factor(epsilon: str, k: int) -> float:
-    """Get the spherical vector {\epsilon^* \otimes \epsilon}_{k, 0}.
+def polarization_factor(epsilon_sph: np.ndarray, k: int) -> float:
+    """Get the spherical vector component {\epsilon^* \otimes \epsilon}_{k, 0}.
     
     # Arguments
-    * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
+    * epsilon_sph::vector(3) - The polarization vector in spherical coordinates w.r.t. the quantization axis of the atom.
     * k::int - Rank of the vector.
     """
-
-    # Get the components of the polarization vector in cartesian coordinates
-    eps_xyz = evaluate_vector_description(epsilon)
-    # Calculate the spherical polarization
-    eps_sph = cart_to_sph(eps_xyz)
     
     # Get the components of the polarization vector
-    eps_m, eps_0, eps_p = get_sph_components(eps_sph)
+    eps_m, eps_0, eps_p = get_sph_components(epsilon_sph)
     
     if k == 0:
         return -1 / np.sqrt(3)
@@ -108,7 +103,7 @@ def alpha_j(state_i: State, omega: float, k: int, ureg):
     return float(sqrt(2*k + 1) * res)
 
 
-def alkali_core_polarizability(state_i: State, mj: float, beam: AxialBeam, epsilon: str) -> float:
+def alkali_core_polarizability(state_i: State, mj: float, beam: AxialBeam, epsilon: str, e_q_xyz: np.ndarray = None) -> float:
     """Calculate the polarizability in SI units using eq. (3.21)
     The unit of the polarizability is (e * a0 / (V/cm)) = (e * a0)^2 / E_h.
 
@@ -121,9 +116,18 @@ def alkali_core_polarizability(state_i: State, mj: float, beam: AxialBeam, epsil
     * state_i::State - atomphys.State object of the state of interest.
     * mj::float - Magnetic quantum number of the state.
     * beam::AxialBeam - Representation of the laser beam.
-    * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
+    * epsilon::str - Description of the polarization vector. 
+    * e_q_xyz::vector(3) - Quantization axis in carthesian coordinates. If not defined, the quantization axis is set by the k-vector of the laser.
     """
 
+    # Calculate the polarization vector in the spherical coordinates
+    if e_q_xyz is None:
+        # The quantization axis is defined by the laser beam
+        e_p_sph = get_polarization_vector(epsilon, beam.k_hat)
+    else:
+        # The quantization axis is defined by e_q_xyz
+        e_p_sph = get_polarization_vector(epsilon, e_q_xyz)
+    
     # Get the unit registry
     ureg = beam.units
     
@@ -135,14 +139,14 @@ def alkali_core_polarizability(state_i: State, mj: float, beam: AxialBeam, epsil
     # Sum over all k values
     for k in range(3):
         res += clebsch_gordan(j_i, k, j_i, mj, 0, mj) / sqrt(2*j_i + 1) * \
-               polarization_factor(epsilon, k) * \
+               polarization_factor(e_p_sph, k) * \
                alpha_j(state_i, beam.omega, k, ureg)
 
     # alpha_j has the opposite sign to the usual definition.
     return - float(res) * ureg('e') * ureg('a_u_length') / ureg('a_u_electric_field')
 
 
-def alkali_core_ac_stark(state_i: State, mj: float, beam: AxialBeam, epsilon: str):
+def alkali_core_ac_stark(state_i: State, mj: float, beam: AxialBeam, epsilon: str, e_q: np.ndarray = None):
     """Calculate the ac Stark shift in SI units (J) using eq. (3.20)
 
     # Arguments
@@ -160,7 +164,7 @@ def alkali_core_ac_stark(state_i: State, mj: float, beam: AxialBeam, epsilon: st
     
     # Or use the formula for the Stark shift with the intensity
     # Note the minus sign here and in alkali_core_polarizability compared to eq. (3.20) and (3.21).
-    return - beam.I0 / (2 * ureg('c * epsilon_0')) * alkali_core_polarizability(state_i, mj, beam, epsilon)
+    return - beam.I0 / (2 * ureg('c * epsilon_0')) * alkali_core_polarizability(state_i, mj, beam, epsilon, e_q)
 
 
 if __name__ == "__main__":
