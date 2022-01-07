@@ -3,6 +3,9 @@ import numpy as np
 import logging
 
 
+### Code for turning a text description of a polarization into a vector ###
+
+# Helper functions
 def _check_all_characters(string: str) -> set:
     """Check that all characters in `string` are valid. 
     
@@ -230,6 +233,7 @@ def evaluate_vector_description(string: str) -> np.ndarray:
     return epsilon / np.sqrt(np.sum(epsilon*epsilon.conj()))
 
 
+### Spherical and cartesian vector transformations ###
 def cart_to_sph(vec_xyz: np.ndarray) -> np.ndarray:
     """Convert a vector in cartesian basis into a vector in spherical basis.
 
@@ -293,6 +297,7 @@ def sph_to_cart(vec_sph: np.ndarray) -> np.ndarray:
     return np.array([Ax, Ay, Az])
 
 
+### Spherical vector utility functions ###
 def get_sph_components(vec_sph: np.ndarray) -> tuple:
     """Get the components A_-, A_0, and A_+ of a spherical vector. 
 
@@ -335,6 +340,82 @@ def make_sph_vector(Am: np.complex, A0: np.complex, Ap: np.complex) -> np.ndarra
 
     return np.array([-Ap, A0, -Am])
 
+
+### Rotations ###
+
+# Helper functions
+def _get_D_matrix(alpha:float, beta: float, gamma:float) -> np.ndarray:
+    """Calculate the Wigner D-matrix for rotating a polarization vector.
+
+    # Arguments
+    * alpha::float - Rotation angle about z axis. 
+    * beta::float - Rotation angle about y' axis.
+    * gamma::float - Rotation angle about z'' axis.
+
+    # Returns
+    * R(alpha z, beta y', gamma z'')::array(3, 3) - Wigner D-matrix.
+    """  
+
+    # Make formula below a bit easier to read
+    a = alpha; b = beta; g = gamma
+
+    return np.array(
+        [[(1+np.cos(b))/2 * np.exp(1j*(a+g)), -np.sin(b)/np.sqrt(2) * np.exp(1j*a), (1-np.cos(b))/2 * np.exp(1j*(a-g))],
+         [np.sin(b)/np.sqrt(2) * np.exp(1j*g), np.cos(b), -np.sin(b)/np.sqrt(2) * np.exp(-1j*g)],
+         [(1-np.cos(b))/2 * np.exp(-1j*(a-g)), np.sin(b)/np.sqrt(2) * np.exp(-1j*a), (1+np.cos(b))/2 * np.exp(-1j*(a+g))]]
+    )
+
+# Vector transformation
+def transform_polarization(e_p: np.ndarray, e_q: np.ndarray):
+    """Transform a polarization vector `e_p` into the coordinate system defined by the quantization axis `e_q`.
+
+    The vectors `e_p` and `e_q` have to be defined in the same "external" cartesian coordinate frame.
+    The polarization vector is then transformed into the primed coordinate system in which the transformed quantization axis vector 
+    `e_q'` points along the z axis, i.e., `e_q' = e_z`
+    
+    # Arguments
+    * e_p::vector(3) - Polarization vector in an "external" cartesian coordinate frame.
+    * e_q::vector(3) - Quantization axis in an "external" cartesian coordinate frame.
+
+    # Returns
+    * e_p_prime::vector(3) - Polarization vector in the cartesian coordinate frame defined by e_q
+    """
+
+    # Make sure the vectors are normalized
+    e_p = e_p / np.sqrt(np.sum(e_p * e_p.conj()))
+    e_q = e_q / np.sqrt(np.sum(e_q * e_q.conj()))
+
+    # Get rotation angles from the quantization axis
+    theta = np.arccos(e_q[2])
+    phi = np.arctan2(e_q[1], e_q[0])
+
+    # Get rotation matrix
+    R = _get_D_matrix(0, theta, phi)
+
+    # Transform both vectors into spherica coordinates
+    e_p_sp = cart_to_sph(e_p)
+    e_q_sp = cart_to_sph(e_q)
+
+    # Transform the polarization vector
+    # The rotation rotates first by an angle phi about the y axis
+    # and then by theta about the z' axis.
+    # Check the section `Transforming polarization between different quantization axes`
+    # in `Rotations in spherical coordintates.ipynb`
+    e_p_sp_prime = np.dot(R.conj(), e_p_sp)
+    e_p_prime = sph_to_cart(e_p_sp_prime)
+    e_p_prime = np.real_if_close(e_p_prime)
+
+    # Transform the quantization axis to verify we didn't make a mistake
+    e_q_sp_prime = np.dot(R.conj(), e_q_sp)
+    e_q_prime = sph_to_cart(e_q_sp_prime)
+    e_q_prime = np.real_if_close(e_q_prime)
+
+    # Compare e_q_prime with a vector in z
+    z = np.array([0, 0, 1])
+    diff = e_q_prime - z
+    assert np.sum(diff * diff.conj()) < 1e-12, 'The rotation went wrong...'
+
+    return e_p_prime
 
 
 if __name__ == '__main__':

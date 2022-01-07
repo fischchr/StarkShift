@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 # Import the functions to test
-from StarkShift.PolarizationUtil import cart_to_sph, sph_to_cart, evaluate_vector_description
+from StarkShift.PolarizationUtil import cart_to_sph, sph_to_cart, evaluate_vector_description, transform_polarization
 
 # Set up logging
 logging.basicConfig(filename='tests/logs/test_PolarizationUtil.log', level=logging.INFO)
@@ -44,6 +44,19 @@ class TestPolarizationUtil(unittest.TestCase):
         eps_sph = cart_to_sph(eps_xyz)
         eps_xyz_2 = sph_to_cart(eps_sph)
         self._check_difference(eps_xyz, eps_xyz_2)
+
+    def _check_transformed_vectors(self, e_p: np.ndarray, e_q: np.ndarray, res: np.ndarray):
+        """Transform polarization vectors and check the result. """
+
+        # Transform the polarization vector
+        e_p_prime = transform_polarization(e_p, e_q)
+        
+        # Log the result
+        logging.info(f'Evaluated {e_p=} to {e_p_prime} ({e_p=}). Should be {res=}')
+
+        # Check the result
+        diff = e_p_prime - res
+        self.assertTrue(np.sum(diff * diff.conj()) < 1e-12)
 
     # Test cases
     def test_linear_polarization(self):
@@ -129,6 +142,82 @@ class TestPolarizationUtil(unittest.TestCase):
         res_xyz = res_xyz / np.sqrt(np.sum(res_xyz * res_xyz.conj()))
 
         self._check_cart(pol, res_xyz)
+
+    def test_transform_polarization_ez(self):
+        """Test the function `transform_polarization` when the quantization axis is e_z. """
+
+        # Quantization axis along z should not change e_p
+        e_q = np.array([0, 0, 1])
+
+        # Polarizations we test
+        e_ps = [
+            evaluate_vector_description('x'), 
+            evaluate_vector_description('y'), 
+            evaluate_vector_description('z'), 
+            evaluate_vector_description('x+iy'), 
+            evaluate_vector_description('x-iy')]
+
+        # Run the tests
+        for e_p in e_ps:
+            # e_p_prime should be equal to e_p
+            res = e_p
+            self._check_transformed_vectors(e_p, e_q, res)
+
+    def test_transform_polarization_ex(self):
+        """Test the function `transform_polarization` when the quantization axis is e_x. """
+
+        # Quantization axis along x
+        e_q = np.array([1, 0, 0])
+
+        # Polarizations we test
+        e_ps = [
+            evaluate_vector_description('x'), # e_x should become e_z
+            evaluate_vector_description('y'), # e_y should stay e_y
+            evaluate_vector_description('z'), # e_z should become -e_x
+            evaluate_vector_description('x+iy'), # RCP should become z+iy
+            evaluate_vector_description('x-iy') # LCP should become z-iy
+        ]
+
+        # Results we expect
+        results = [
+            evaluate_vector_description('z'),
+            evaluate_vector_description('y'),
+            evaluate_vector_description('-x'),
+            evaluate_vector_description('z+iy'),
+            evaluate_vector_description('z-iy')
+        ]
+
+        # Run the tests
+        for e_p, res in zip(e_ps, results):
+            self._check_transformed_vectors(e_p, e_q, res)
+
+    def test_transform_polarization_ey(self):
+        """Test the function `transform_polarization` when the quantization axis is e_y. """
+
+        # Quantization axis along y
+        e_q = np.array([0, 1, 0])
+
+        # Polarizations we test
+        e_ps = [
+            evaluate_vector_description('x'), # e_x should become -e_y
+            evaluate_vector_description('y'), # e_y should become e_z
+            evaluate_vector_description('z'), # e_z should become -e_x
+            evaluate_vector_description('x+iy'), # RCP should become -y+iz
+            evaluate_vector_description('x-iy') # LCP should become -y-iz
+        ]
+
+        # Results we expect
+        results = [
+            evaluate_vector_description('-y'),
+            evaluate_vector_description('z'),
+            evaluate_vector_description('-x'),
+            evaluate_vector_description('-y+iz'),
+            evaluate_vector_description('-y-iz')
+        ]
+
+        # Run the tests
+        for e_p, res in zip(e_ps, results):
+            self._check_transformed_vectors(e_p, e_q, res)
 
 
 if __name__ == '__main__':
