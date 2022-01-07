@@ -11,17 +11,64 @@ $ pip3 install git+https://gitlab.phys.ethz.ch/tiqi-projects/optical-trap/StarkS
 ```
 
 or after downloading the repository
+
 ```bash
 $ git clone https://gitlab.phys.ethz.ch/tiqi-projects/optical-trap/StarkShift/
 $ cd StarkShift && pip3 install ./
 ```
 
-## Examples
+## Atomic states
 
-The following examples show how the ac Stark shift can be calculated. 
-Also check the unit tests in `tests/`, which show how the different functions are used.
+The library is using internally the [atomphys](https://github.com/mgrau/atomphys) and [ARC](https://github.com/nikolasibalic/ARC-Alkali-Rydberg-Calculator) library.
+Therefore, different notations are used to define the state of an electron.
 
-### Axial Beams
+For low-lying electronic states, `atomphy` is used and a state might be defined as
+
+```python
+from atomphys import Atom
+
+# Define the atomphys atom
+ap_atom = Atom('Ca')
+# Define the atomphys state
+ap_state = ap_atom('1S0')
+# Define the mj value (ap_state only knows the total angular momentum j)
+mj1 = 0
+```
+
+For Rydberg states, `arc` is used and a state is defined by its quantum numbers
+
+```python
+from arc import Potassium
+
+# Define the ARC atom
+arc_atom = Potassium()
+# Define the Rydberg state (n, s, l, j, mj)
+state_r = (50, 1/2, 0, 1/2, 1/2)
+```
+
+Finally, for alkaline-earth Rydberg states, a combination of the two is used
+
+```python
+from atomphys import Atom
+from arc import Calcium40
+
+# Define the atomphys atom for the core state
+ap_atom = Atom('Ca+')
+# Define the core state
+ap_state = ap_atom('1S1/2')
+
+# Define the ARC atom
+arc_atom = Calcium40()
+# Define the Rydberg state (n2, s2, l2, j2)
+# Note that you can either set s2 = 1/2 (jj coupling) or s2 = 0 (jK coupling)
+state_r = (50, 0, 49, 49)
+
+# Define the total angular momenutm (in jK coupling in this case)
+j = 49 + 1/2
+mj = j
+```
+
+## Laser beams
 
 The library is using `AxialBeam` objects to define laser beams. So far, a Gaussian beam
 
@@ -46,7 +93,7 @@ beam = GaussianBeam(P, k, w0, r0, ureg)
 print(beam.lam, beam.I0, beam.zR, beam.w0, beam.omega)
 ```
 
-and a bottle-beam have been implemented
+and a bottle-beam
 
 ```python
 from StarkShift import BottleBeam
@@ -62,6 +109,43 @@ NA = 0.4 # NA of the imaging system
 
 bob = BottleBeam(I0, k, a, NA, r0, u, N_eval=51)
 ```
+
+have been implemented.
+
+## Quantization axis and polarization
+
+By default, the quantization axis of the atom is defined by the k-vector of the laser beam object from above (a different quantization axis can be passed in as a keyword argument, see e.g., `alkali_core_ac_stark`).
+The polarization vector is then defined with respect to this quantization axis.
+For example, a beam propagating along z (k = |k| e_z) with linear polarization has a polarization vector epsilon = cos(ϕ) e_x + sin(ϕ) e_y.
+In the calculation, the polarization can be specified in text form, i.e., for the from before with linear polarization (ϕ = π/2)
+
+```python
+# Define a linear polarization
+epsilon = 'cos(pi/4) * x + sin(pi/4) * y'
+```
+
+Similarly, when the beam is right or left circularly polarized,
+
+```python
+# Define a circular polarization
+epsilon_rcp = 'x + iy'
+epsilon_lcp = 'x - iy'
+```
+
+Note, that it is possible to define unphysical polarizations. For example, when k = |k| e_z, a value `epsilon = z` would correspond to an (unphysical) longitudinal polarization of the laser.
+
+## Testing and verification
+
+The calculation of Stark shifts has been tested and a set of unit tests is available in `tests/`.
+
+* For low-lying electronic states the code has been compared against the `atomphys` library.
+* For Rydberg states of alkali atoms, the calculation is compared against the polarizability of a free electron (the plane wave limit).
+* For alkaline-earth Rydberg states, it was verified that the calculation results in the correct single-electron results when setting the quantum numbers of one of the two electrons to zero.
+
+## Examples
+
+The following examples show how the ac Stark shift can be calculated.
+Also check the unit tests in `tests/`, which show how the different functions are used.
 
 ### Expansion of the beam
 
@@ -169,3 +253,4 @@ U_kB = (U / ureg('k_B')).to('mK')
 
 print(U_kB)
 ```
+

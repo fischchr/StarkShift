@@ -109,7 +109,6 @@ class TestAlkaliCorePolarizability(unittest.TestCase):
             # Compare the polarizability
             self._compare_polarizability(ap_state, j1, epsilon, theta_p, theta_k=np.pi/2)
 
-
 if __name__ == '__main__':
     # Run the tests
     unittest.main()

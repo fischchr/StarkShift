@@ -2,7 +2,7 @@ from atomphys import Atom, Laser, Transition, State
 import numpy as np
 from sympy import sympify, sqrt
 from sympy.physics.wigner import clebsch_gordan, wigner_6j
-from .PolarizationUtil import get_sph_components, get_polarization_vector
+from .PolarizationUtil import get_sph_components, get_polarization_vector, sph_to_cart
 from .AxialBeams import AxialBeam
 
 ### Helper functions ###
@@ -124,6 +124,13 @@ def alkali_core_polarizability(state_i: State, mj: float, beam: AxialBeam, epsil
     if e_q_xyz is None:
         # The quantization axis is defined by the laser beam
         e_p_sph = get_polarization_vector(epsilon, beam.k_hat)
+
+        # Calculate the angle between the polarization vector and the k-vector
+        theta = np.arccos(np.dot(sph_to_cart(e_p_sph), beam.k_hat))
+
+        # Check that the polarization vector is not parallel to the k-vector
+        if theta < 1e-6:
+            print('Unphysical longitudinal polarization.')
     else:
         # The quantization axis is defined by e_q_xyz
         e_p_sph = get_polarization_vector(epsilon, e_q_xyz)
