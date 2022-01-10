@@ -232,7 +232,6 @@ def alkaline_earth_rydberg_polarizability(state_c: State, state_r: tuple, j: flo
 # Total stark shift
 def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float, 
                             beam_expansion: SphericalBeamExpansion, epsilon:str, e_q_xyz: np.ndarray = None,
-                            N_r: int = 100, N_theta: int = 250, L_max: int = 15, 
                             arc_atom: AlkaliAtom = None, r_v: np.ndarray = None, R_eval: np.ndarray = None):
     """Calculate the ac Stark shift in SI units (J). 
 
@@ -253,17 +252,8 @@ def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float,
     * R_eval::np.array(N) - Radial wave function R_{nl}(r_v) evaluated on r_v.
     """
     
-    # Get the unit registry
-    ureg = beam_expansion.units
-
     # Get the beam
     beam = beam_expansion.beam
-
-    # Get the expansion limits
-    r_i = 1 * ureg('a0')
-    r_o = 2 * beam.w0
-
-    beam_expansion = SphericalBeamExpansion(beam, N_r, N_theta, L_max, r_i, r_o)
 
     # Calculate the contribution of the core electron
     U_core = alkaline_earth_core_ac_stark(state_c, state_r, j, mj, epsilon, beam, e_q_xyz)
