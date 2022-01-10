@@ -125,7 +125,7 @@ class AlkalineEarthPolarizability(unittest.TestCase):
         j = 49 + 1/2
         mj = j
 
-        U = alkaline_earth_ac_stark(state_c, state_r, j, mj, beam, epsilon, arc_atom=arc_atom)
+        U = alkaline_earth_ac_stark(state_c, state_r, j, mj, beam_expansion, epsilon, arc_atom=arc_atom)
 
         # Log the result
         line1 = 'test_alkaline_earth_ac_stark. \n'

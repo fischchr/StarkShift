@@ -231,7 +231,7 @@ def alkaline_earth_rydberg_polarizability(state_c: State, state_r: tuple, j: flo
 
 # Total stark shift
 def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float, 
-                            beam: AxialBeam, epsilon:str, e_q_xyz: np.ndarray = None,
+                            beam_expansion: SphericalBeamExpansion, epsilon:str, e_q_xyz: np.ndarray = None,
                             N_r: int = 100, N_theta: int = 250, L_max: int = 15, 
                             arc_atom: AlkaliAtom = None, r_v: np.ndarray = None, R_eval: np.ndarray = None):
     """Calculate the ac Stark shift in SI units (J). 
@@ -241,7 +241,7 @@ def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float,
     * state_r::tuple(4) - Rydberg state (n_2, s_2, l_2, j_2).
     * j::float - Total angular momentum j.
     * mj::float - Total magnetic quantum number m_j.
-    * beam::AxialBeam - Representation of the beam.
+    * beam_expansion::SphericalBeamExpansion - Expansion of the beam in spherical harmonics.
     * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
     * e_q_xyz::vector(3) - Quantization axis in carthesian coordinates. If not defined, the quantization axis is set by the k-vector of the laser.
     * N_r::int - Number of radial grid points.
@@ -254,7 +254,10 @@ def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float,
     """
     
     # Get the unit registry
-    ureg = beam.units
+    ureg = beam_expansion.units
+
+    # Get the beam
+    beam = beam_expansion.beam
 
     # Get the expansion limits
     r_i = 1 * ureg('a0')
