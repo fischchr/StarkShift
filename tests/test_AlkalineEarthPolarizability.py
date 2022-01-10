@@ -49,7 +49,7 @@ class AlkalineEarthPolarizability(unittest.TestCase):
         state_c = ap_atom('S1/2')
 
         # Define the Rydberg state
-        state_r = (0, 0, 0, 0, 0)
+        state_r = (0, 0, 0, 0)
 
         # Define the total angular momentum
         j = 1/2
@@ -84,7 +84,7 @@ class AlkalineEarthPolarizability(unittest.TestCase):
         # Define the ARC atom (for testing it doesn't matter that it's not the same as the atom phys atom)
         arc_atom = Potassium()
         # Define the Rydberg state
-        state_r = (50, 0, 49, 49, 49)
+        state_r = (50, 0, 49, 49)
 
         # Define the total angular momentum
         j = 49
@@ -94,7 +94,7 @@ class AlkalineEarthPolarizability(unittest.TestCase):
         U_AE = alkaline_earth_rydberg_ac_stark(state_c, state_r, j, mj, beam_expansion, arc_atom)
 
         # Calculate the ac Stark shift using the alkali atom function
-        U_A = alkali_rydberg_ac_stark(state_r, beam_expansion, arc_atom)
+        U_A = alkali_rydberg_ac_stark((*state_r, mj), beam_expansion, arc_atom)
 
         # Calculate the difference
         diff = U_AE - U_A
@@ -119,7 +119,7 @@ class AlkalineEarthPolarizability(unittest.TestCase):
         # Define the ARC atom (for testing it doesn't matter that it's not the same as the atom phys atom)
         arc_atom = Potassium()
         # Define the Rydberg state
-        state_r = (50, 0, 49, 49, 49)
+        state_r = (50, 0, 49, 49)
 
         # Combined angular momentum
         j = 49 + 1/2

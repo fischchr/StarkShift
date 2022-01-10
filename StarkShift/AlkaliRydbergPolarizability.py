@@ -11,6 +11,7 @@ from .SphericalExpansion import SphericalBeamExpansion
 
 
 ### Helper functions ###
+
 def get_radial_integral(r_v: np.array, R_eval: np.array, interpolated_beam: SphericalBeamExpansion, k: int) -> float:
     """Calculate the radial integral <n l | I_{k, 0} | n l > in SI units using eq. (3.28).
 
@@ -45,11 +46,11 @@ def get_radial_integral(r_v: np.array, R_eval: np.array, interpolated_beam: Sphe
     return np.sum(integrand)
 
 
-def evaluate_wave_function(state_i: tuple, arc_atom: AlkaliAtom, ureg: UnitRegistry) -> tuple:
+def evaluate_wave_function(configuration_i: tuple, arc_atom: AlkaliAtom, ureg: UnitRegistry) -> tuple:
     """Evaluate the radial wave function in SI units. 
     
     # Arguments
-    * state_i::tuple(5) - Rydberg state (n, s, l, j, mj).
+    * configuration_i::tuple(4) - Rydberg configuration (n, s, l, j).
     * arc_atom::arc.AlkaliAtom - Representation of the atom from ARC
     * ureg::Unitregistry - Unit registry.
 
@@ -58,10 +59,10 @@ def evaluate_wave_function(state_i: tuple, arc_atom: AlkaliAtom, ureg: UnitRegis
     * R_eval::np.array(N) - Radial wave function R_{nl}(r_v) evaluated on r_v (in SI units).
     """
 
-    logging.debug(f'evaluate_wave_function: {state_i=}, {arc_atom=}')
+    logging.debug(f'evaluate_wave_function: {configuration_i=}, {arc_atom=}')
 
     # Get the quantum numbers of the state
-    n, s, l, j, mj = state_i
+    n, s, l, j = configuration_i
 
     # Define the grid on which to evaluate
     a_i = 10 * ureg('a0')
@@ -100,7 +101,7 @@ def alkali_rydberg_ac_stark(state_i: tuple, beam_expansion: SphericalBeamExpansi
     logging.debug(f'alkali_rydberg_ac_stark: {state_i=}, {arc_atom=}')
 
     # Get the quantum numbers of the state
-    _, s, l, j, mj = state_i
+    n, s, l, j, mj = state_i
 
     # Make sure 3j and 6js are evaluated correctly
     s = sympify_angular_momentum(s)
@@ -113,9 +114,12 @@ def alkali_rydberg_ac_stark(state_i: tuple, beam_expansion: SphericalBeamExpansi
     # Get the unit registry
     ureg = beam_expansion.units
 
-    # Integrate wave function if the wave function hasn't been evaluated yet
+    # Evaluate the wave function if the wave function hasn't been evaluated yet
     if arc_atom is not None:
-        r_v, R_eval = evaluate_wave_function(state_i, arc_atom, ureg)
+        # Get the configuration of the state
+        configuration_i = (n, s, l, j)
+        # Evaluate the wave function
+        r_v, R_eval = evaluate_wave_function(configuration_i, arc_atom, ureg)
 
     # Allocate memory for the sum
     res = 0

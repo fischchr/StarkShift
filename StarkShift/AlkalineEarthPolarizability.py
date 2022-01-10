@@ -32,10 +32,16 @@ def get_j2(state_r: tuple) -> float:
     """Get the angular momentum of the Rydberg electron. 
 
     # Arguments
-    * state_r::tuple(5) - Rydberg state (n, s, l, j, mj).
+    * state_r::tuple(4/5) - Rydberg state (n, s, l, j) or (n, s, l, j, mj).
     """
 
-    _, _, _, j2, _ = state_r
+    if len(state_r) == 4:
+        _, _, _, j2 = state_r
+    elif len(state_r) == 5:
+        _, _, _, j2, _ = state_r
+    else:
+        raise ValueError(f'{state_r=} is invalid.')
+
     return sympify_angular_momentum(j2)
 
 
@@ -75,7 +81,7 @@ def alkaline_earth_core_polarizability(state_c: State, state_r: tuple, j: float,
 
     # Arguments
     * state_c::atomphys.State - State of the core electron.
-    * state_r::tuple(5) - Rydberg state (n, s, l, j, mj).
+    * state_r::tuple(4) - Rydberg state (n, s, l, j).
     * j::float - Total angular momentum j.
     * mj::float - Total magnetic quantum number m_j.
     * beam::AxialBeam - Representation of the beam.
@@ -128,7 +134,7 @@ def alkaline_earth_rydberg_ac_stark(state_c: State, state_r: tuple, j: float, mj
     
     # Arguments
     * state_c::atomphys.State - State of the core electron.
-    * state_r::tuple(5) - Rydberg state (n, s, l, j, mj).
+    * state_r::tuple(4) - Rydberg state (n, s, l, j).
     * j::float - Total angular momentum j.
     * mj::float - Total magnetic quantum number m_j.
     * beam_expansion::SphericalBeamExpansion - Expansion of the beam in spherical harmonics.
@@ -142,12 +148,11 @@ def alkaline_earth_rydberg_ac_stark(state_c: State, state_r: tuple, j: float, mj
     j1 = get_j1(state_c)
 
     # Get the quantum numbers of the Rydberg state
-    _, s2, l2, j2, mj2 = state_r
+    _, s2, l2, j2 = state_r
 
     # Make sure 3j and 6js are evaluated correctly
     s2 = sympify_angular_momentum(s2)
     j2 = sympify_angular_momentum(j2)
-    mj2 = sympify_angular_momentum(mj2)
 
     # Symifpy the total angular momentum
     j = sympify_angular_momentum(j)
@@ -197,7 +202,7 @@ def alkaline_earth_rydberg_polarizability(state_c: State, state_r: tuple, j: flo
     
     # Arguments
     * state_c::atomphys.State - State of the core electron.
-    * state_r::tuple(5) - Rydberg state (n, s, l, j, mj).
+    * state_r::tuple(4) - Rydberg state (n, s, l, j).
     * j::float - Total angular momentum j.
     * mj::float - Total magnetic quantum number m_j.
     * beam_expansion::SphericalBeamExpansion - Expansion of the beam in spherical harmonics.
@@ -233,7 +238,7 @@ def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float,
 
     # Arguments
     * state_c::State - atomphys.State object of the core state.
-    * state_r::tuple(5) - Rydberg state (n_2, s_2, l_2, j_2, mj_2).
+    * state_r::tuple(4) - Rydberg state (n_2, s_2, l_2, j_2).
     * j::float - Total angular momentum j.
     * mj::float - Total magnetic quantum number m_j.
     * beam::AxialBeam - Representation of the beam.

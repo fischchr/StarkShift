@@ -376,7 +376,7 @@ class GaussianBeam(AxialBeam):
         return get_I0(self.P, self.w0)
 
     @I0.setter
-    def IO(self, I0):
+    def I0(self, I0):
         """Set the intensity of the beam at the waist. """
         self.P = get_P0(I0, self.w0)
 
