@@ -218,6 +218,9 @@ def alkaline_earth_rydberg_polarizability(state_c: State, state_r: tuple, j: flo
         # Make sure they have the same length
         assert r_v.shape == R_eval.shape
 
+    # Make sure we have evaluated the wave function
+    assert R_eval is not None, 'No wave function specified.'
+
     # Get the unit registry
     ureg = beam_expansion.units
 
@@ -243,9 +246,6 @@ def alkaline_earth_ac_stark(state_c: State, state_r: tuple, j: float, mj: float,
     * beam_expansion::SphericalBeamExpansion - Expansion of the beam in spherical harmonics.
     * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
     * e_q_xyz::vector(3) - Quantization axis in carthesian coordinates. If not defined, the quantization axis is set by the k-vector of the laser.
-    * N_r::int - Number of radial grid points.
-    * N_theta::int - Number of grid points (altitude). The number of azimuthal grid points N_phi = 2 * N_theta
-    * L_max::int - Order of expansion in spherical harmonics Y_{l,m}.
     * arc_atom::arc.AlkaliAtom - Representation of the atom used for numerically evaluating the radial wave function.
                                  If not `arc_atom` is passed, `r_v` and `R_eval` must be given.
     * r_v::np.array(N) - Radial grid points.

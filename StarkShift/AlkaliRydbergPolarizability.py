@@ -121,6 +121,9 @@ def alkali_rydberg_ac_stark(state_i: tuple, beam_expansion: SphericalBeamExpansi
         # Evaluate the wave function
         r_v, R_eval = evaluate_wave_function(configuration_i, arc_atom, ureg)
 
+    # Make sure we have evaluated the wave function
+    assert R_eval is not None, 'No wave function specified.'
+
     # Allocate memory for the sum
     res = 0
 
