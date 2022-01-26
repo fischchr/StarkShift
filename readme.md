@@ -99,7 +99,7 @@ and a bottle-beam
 from StarkShift import BottleBeam
 
 # Define a bottle-beam 
-I0 = 1 * ureg('W/cm^2')                 # Intensity scaling factor
+P = 500 * ureg('mW')                    # Total power of the bottle beam
 lam = 532 * ureg('nm')                  # Wavelength
 k = 2*np.pi * np.array([0, 0, 1]) / lam # k-vector
 r0 = np.array([1, 0, 1]) * ureg('um')   # Position of the focus
@@ -107,7 +107,7 @@ r0 = np.array([1, 0, 1]) * ureg('um')   # Position of the focus
 a = 0.62 # scaled phase-inversion radius
 NA = 0.4 # NA of the imaging system
 
-bob = BottleBeam(I0, k, a, NA, r0, u, N_eval=51)
+bob = BottleBeam(P, k, a, NA, r0, u, N_eval=51)
 ```
 
 have been implemented.
@@ -257,4 +257,3 @@ U_kB = (U / ureg('k_B')).to('mK')
 
 print(U_kB)
 ```
-

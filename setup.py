@@ -5,7 +5,7 @@ with open('readme.md', 'r') as fh:
 
 setuptools.setup(
     name="StarkShift",
-    version="1.0.3",
+    version="1.0.4",
     author="Christoph Fischer",
     author_email="fischchr@phys.ethz.ch",
     description="A module for calculating ac Stark shifts on alkali and alkaline-earth atoms.",
