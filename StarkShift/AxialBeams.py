@@ -4,6 +4,8 @@ from .GaussianBeamUtils import *
 from scipy.interpolate import RegularGridInterpolator
 from pint import UnitRegistry
 
+def tst():
+    pass
 
 class AxialBeam:
     """Class for evaluating axially symmetric beams. """
@@ -433,6 +435,7 @@ class BottleBeam(AxialBeam):
 
         if np.abs(d_max.to('um').magnitude) < 1e-6:
             raise ValueError('d_max must be larger than 0.')
+        self._dmax = d_max
         self._rho_max = self.rho(d_max)
         self._mu_max = self.mu(d_max)
          
@@ -522,6 +525,33 @@ class BottleBeam(AxialBeam):
         x = np.stack((r_perp_um, z_ax_um), axis=1)
         
         return self.I0 * self._I_interpolation(x)
+
+    @property
+    def P(self):
+        return get_beam_power(self, 10 * self._dmax)
+        
+
+def get_beam_power(beam: AxialBeam, rmax: float) -> float:
+    """Integrate the beam intensity at the focus to get the total beam power. 
+    
+    # Arguments
+    * beam::AxialBeam - Beam to integrate.
+    * rmax::float - Maximum radius up to which the beam is integrated.
+
+    # Returns 
+    * P::float - Total power of the beam.
+    """
+
+    # Get points on which the beam is evaluated
+    r_perp = np.linspace(0, rmax.to('um').magnitude, 10_000) * beam.u('um')
+    dr = np.diff(r_perp)[0]
+    z_ax = np.zeros(r_perp.shape) * beam.u('um')
+    # Get the intensity at those coordinates
+    I = beam.eval_beam_coordinates(z_ax, r_perp)
+    # Integrate the intensity in the focal plane
+    P = 2*np.pi * np.sum(r_perp * I * dr)
+
+    return P.to('mW')
 
 
 if __name__ == "__main__":

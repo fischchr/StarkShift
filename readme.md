@@ -137,6 +137,10 @@ Note, that it is possible to define unphysical polarizations. For example, when 
 ## Testing and verification
 
 The calculation of Stark shifts has been tested and a set of unit tests is available in `tests/`.
+The tests can be run by executing the script `run_tests.py`.
+It is also possible to run idividual tests by invoking `python3 -m unittest tests/test_TESTCASE.py` where `TESTCASE` is the name of one of the unit tests.
+
+The following tests have been performed:
 
 * For low-lying electronic states the code has been compared against the `atomphys` library.
 * For Rydberg states of alkali atoms, the calculation is compared against the polarizability of a free electron (the plane wave limit).
