@@ -21,7 +21,7 @@ k = 2*np.pi / lam * np.array([0, 0, 1])
 r0 = np.array([0, 0, 0]) * ureg('um')
 
 # Additional BottleBeam settings
-I0 = 250 * ureg('mW/um^2')
+#I0 = 250 * ureg('mW/um^2')
 a = 0.62
 NA = 0.4
 d_max = 20 * ureg('um')
@@ -29,7 +29,7 @@ N_eval = 31
 
 #axial = 
 gaussian = GaussianBeam(P, k, w0, r0, ureg)
-bob = BottleBeam(I0, k, a, NA, r0, ureg, d_max, N_eval)
+bob = BottleBeam(P, k, a, NA, r0, ureg, d_max, N_eval)
  
 # Define the testcase
 class TestAxialBeams(unittest.TestCase):
@@ -54,12 +54,11 @@ class TestAxialBeams(unittest.TestCase):
         if N_eval >= 31:
             # Evaluate beam power
             P_bob = bob.P
-            # The expected result for high N_eval
-            P_calc = 585.3075 * ureg('mW')
             # Relative error
-            rel_err = np.abs((P_bob - P_calc) / P_calc).to_base_units().magnitude
+            rel_err = np.abs((P_bob - P) / P).to_base_units().magnitude
             # Log results
-            logging.debug(f'test_P: {P_bob=}, {P_calc=}, {rel_err=}')
+            logging.debug(f'test_P: {P_bob=}, {P=}, {rel_err=}')
 
             # Verify result
-            self.assertTrue(rel_err < 1e-1)
+            self.assertTrue(rel_err < 1e-3)
+            

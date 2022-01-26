@@ -407,12 +407,12 @@ class GaussianBeam(AxialBeam):
 
 class BottleBeam(AxialBeam):
     """Bottle beam. """
-    def __init__(self, I0: float, k: np.ndarray, a: float, NA: float, r0: np.ndarray, ureg: UnitRegistry, d_max: float, 
+    def __init__(self, P: float, k: np.ndarray, a: float, NA: float, r0: np.ndarray, ureg: UnitRegistry, d_max: float, 
                  N_eval: int = 51):
         """Constructor
 
         # Arguments
-        * I0::float - Intensity scaling factor.
+        * P::float - Beam power.
         * k::np.array(3) - k-vector of the beam. lam = 2 pi / |k|
         * a::float - Scaled radius of the phase-shifted region.
         * NA::float - Numerical apperture.
@@ -422,13 +422,16 @@ class BottleBeam(AxialBeam):
         * N_eval::int - Number of grid points on which the intensity of the bottle beam is exactly evaluated.
         """
 
+        # Dummy intensity for now
+        I0 = 1 * ureg('mW/um^2')
+
         # Initialize the axial beam
         super(BottleBeam, self).__init__(I0, k, r0, ureg)
         
         # Set beam properties
         self._a = a
         self._NA = NA
-        self._I0 = I0
+        #self._I0 = I0
         
         # Set interpolation
         self._N_eval = N_eval
@@ -441,6 +444,12 @@ class BottleBeam(AxialBeam):
          
         # Interpolate the beam 
         self.interpolate_beam()
+
+        # Set the beam power to the corret value
+        # This overwrites the dummy intensity I0 we set before
+        self.P = P
+        
+
                
     @property
     def a(self):
@@ -528,7 +537,16 @@ class BottleBeam(AxialBeam):
 
     @property
     def P(self):
-        return get_beam_power(self, 10 * self._dmax)
+        """Get the total power of the beam (rounded to 1 uW). """
+
+        return np.round(get_beam_power(self, self._dmax).to('mW'), 3)
+
+    @P.setter
+    def P(self, P_new: float):
+        """Set the total power of the beam. """
+
+        # Scale the intensity to get the desired power
+        self.I0 = P_new / self.P * self.I0
         
 
 def get_beam_power(beam: AxialBeam, rmax: float) -> float:
