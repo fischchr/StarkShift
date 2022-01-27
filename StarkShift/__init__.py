@@ -1,5 +1,6 @@
 from .AxialBeams import GaussianBeam, BottleBeam
 from .SphericalExpansion import SphericalBeamExpansion
+from .StarkShiftUtil import find_trap_depth
 from .AlkaliCorePolarizability import alkali_core_polarizability, alkali_core_ac_stark
 from .AlkaliRydbergPolarizability import alkali_rydberg_polarizability, alkali_rydberg_ac_stark
 from .AlkalineEarthPolarizability import alkaline_earth_core_polarizability, alkaline_earth_core_ac_stark

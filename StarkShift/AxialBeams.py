@@ -476,6 +476,15 @@ class BottleBeam(AxialBeam):
 
         self._NA = NA
         self.interpolate_beam()  
+
+    @property
+    def r0(self):
+        return self._r0
+        
+    @r0.setter
+    def r0(self, r0):
+        self._r0 = r0
+        self.interpolate_beam()
         
     def rho(self, r: float):
         """Get the scaled radius rho. """
