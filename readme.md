@@ -2,6 +2,15 @@
 
 A library for calculating ac Stark shifts on alkali atoms, alkali Rydberg atoms, and alkaline-earth Rydberg atoms.
 
+## Contents
+
+* [Installation](#installation)
+* [Definition of states](#atomic-states)
+* [Definition of laser beams](#laser-beams)
+* [Quantization axis and polarization](#quantization-axis-and-polarization)
+* [Testing and verification](#testing-and-verification)
+* [Examples](#examples)
+
 ## Installation
 
 The library can be installed using pip either from gitlab
