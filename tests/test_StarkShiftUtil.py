@@ -55,5 +55,5 @@ class TestStarkShiftUtil(unittest.TestCase):
     def test_find_trap_depth(self):
         """Test the function which finds the trap depth. """
 
-        r_saddle, phi_saddle, U_saddle, trap_depth = find_trap_depth(state_c, arc_atom, state_r, j, mj, bob, epsilon, True)
+        r_saddle, phi_saddle, U_saddle, trap_depth = find_trap_depth(state_c, arc_atom, state_r, j, mj, bob, epsilon)
         logging.info(f'find_trap_depth: {r_saddle=}, {phi_saddle=}, {U_saddle=}, {trap_depth=}')
