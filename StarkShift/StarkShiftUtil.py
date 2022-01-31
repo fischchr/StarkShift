@@ -5,9 +5,13 @@ import numpy as np
 from .SphericalExpansion import SphericalBeamExpansion
 from .AlkalineEarthPolarizability import alkaline_earth_ac_stark
 from .BottleBeamUtils import find_intensity_saddle_point
+from .AxialBeams import AxialBeam, GaussianBeam, BottleBeam
+from atomphys import State
+from arc import AlkaliAtom
 
 
-def _evaluate_potential(rs, phi, state_c, arc_atom, state_r, j, mj, beam, epsilon) -> np.ndarray:
+def _evaluate_potential(rs: np.ndarray, phi: float, state_c: State, arc_atom: AlkaliAtom, state_r: tuple, \
+                        j: float, mj: float, beam: BottleBeam, epsilon: str) -> np.ndarray:
     """Function for evaluating the bottle beam potential at a certain angle phi.
 
     The plane (z, r_perp), which is defined by the k-vector of the beam, can be transformed to 
@@ -58,12 +62,15 @@ def _evaluate_potential(rs, phi, state_c, arc_atom, state_r, j, mj, beam, epsilo
     return U
 
 
-def find_trap_depth(state_c, arc_atom, state_r, j, mj, beam, epsilon, verbose: bool = False) -> tuple:
-    """Find the trap depth for an alkaline-earth Rydberg atom in a bottle beam trap. 
+def find_trap_depth(state_c: State, arc_atom: AlkaliAtom, state_r: tuple, j: float, mj: float, \
+                    beam: AxialBeam, epsilon: str = 'x', verbose: bool = False) -> tuple:
+    """Find the trap depth for an alkaline-earth Rydberg atom in an optiacal trap. 
 
-    This function first finds the direction and distance of the saddle point of the optical intensity relative
-    to the focus of the beam. This saddle point in optical intensity is identical to the saddle point of the 
-    optical potential. This can be verified using the function `_find_trap_depth_depreciated`.
+    Depending on the beam, this function will do different things:
+    * For a bottle beam, this function first finds the direction and distance of the saddle point of the optical intensity relative 
+      to the focus of the beam. This saddle point in optical intensity is identical to the saddle point of the 
+      optical potential. This can be verified using the function `_find_trap_depth_depreciated`.
+    * For a gaussian beam the trap depth is determined by the ac Stark shift on an atom located at the focus of the beam.
 
     # Arguments
     * state_c::atomphys.State - State of the core electron.
@@ -71,33 +78,54 @@ def find_trap_depth(state_c, arc_atom, state_r, j, mj, beam, epsilon, verbose: b
     * state_r::tuple(4) - Rydberg state (n, s, l, j).
     * j::float - Total angular momentum j.
     * mj::float - Total magnetic quantum number m_j.
-    * beam::BottleBeam - The bottle beam.
+    * beam::AxialBeam - The optical trapping beam.
     * epsilon::str - Description of the polarization vector. See PolarizationUtil.evaluate_vector_description for details.
     * verbose::bool - Additional output.
 
     # Returns
-    (r_saddle, phi_saddle, U_saddle, trap_depth) - Position of the saddle point, height of the saddle point and trap depth.
+    * (r_saddle, phi_saddle, U_saddle, trap_depth) - Position of the saddle point, height of the saddle point and trap depth for a bottle beam.
+    * trap_depth - Trap depth only for a Gaussian beam.
     """
 
     # Get the unit registry
     ureg = beam.units
 
-    # Find the distance and direction of the saddle point
-    r_saddle, phi_saddle = find_intensity_saddle_point(beam, verbose)
+    if isinstance(beam, BottleBeam):
+        # Find the distance and direction of the saddle point
+        r_saddle, phi_saddle = find_intensity_saddle_point(beam, verbose)
+
+        # Calculate the trap depth
+        U_center = _evaluate_potential(np.zeros(1) * ureg('um'), 0, state_c, arc_atom, state_r, 
+                                       j, mj, beam, epsilon)[0]
+                                   
+        U_saddle = _evaluate_potential(np.linspace(r_saddle, 2*r_saddle, 1), phi_saddle, state_c, arc_atom, state_r, 
+                                       j, mj, beam, epsilon)[0]
+    elif isinstance(beam, GaussianBeam):
+        # Get a beam object which is focused to (0, 0, 0) (i.e., the position of the atom) to determine the trap depth
+        focus_beam = GaussianBeam(beam.P, beam.k, beam.w0, np.array([0, 0, 0])*ureg('m'), ureg)
+
+        # Expand the beam
+        beam_expansion = SphericalBeamExpansion(focus_beam, N_r=100, N_theta=250, L_max=15, \
+                                                r_i=1*ureg('a0'), r_o =20*ureg('um'))
+
+        # Evaluate the potential at the focus
+        U_center = alkaline_earth_ac_stark(state_c, state_r, j, mj, beam_expansion, epsilon, arc_atom=arc_atom)
+        # The potential at r >> 0 is 0.
+        U_saddle = 0 * ureg('J')
+
+    else:
+        raise NotImplementedError()
 
     # Calculate the trap depth
-    U_center = _evaluate_potential(np.zeros(1) * ureg('um'), 0, state_c, arc_atom, state_r, 
-                                   j, mj, beam, epsilon)[0]
-                                   
-    U_saddle = _evaluate_potential(np.linspace(r_saddle, 2*r_saddle, 1), phi_saddle, state_c, arc_atom, state_r, 
-                                   j, mj, beam, epsilon)[0]
-
-    
     trap_depth = ((U_saddle - U_center) / ureg('k_B')).to('mK')
 
-    logging.debug(f'find_trap_depth: Found trapping saddle point ({r_saddle=}, {phi_saddle=}). Potential {U_saddle=}, {trap_depth=}.')
-    
-    return r_saddle, phi_saddle, U_saddle, trap_depth
+    if isinstance(beam, BottleBeam):
+        logging.debug(f'find_trap_depth: Found trapping saddle point ({r_saddle=}, {phi_saddle=}). Potential {U_saddle=}, {trap_depth=}.')
+        return r_saddle, phi_saddle, U_saddle, trap_depth
+
+    elif isinstance(beam, GaussianBeam):
+        logging.debug(f'find_trap_depth: Found trap depth of Gaussian beam {trap_depth=}.')
+        return trap_depth
 
 
 def _find_trap_depth_depreciated(state_c, arc_atom, state_r, j, mj, beam, epsilon, verbose: bool = False) -> tuple:

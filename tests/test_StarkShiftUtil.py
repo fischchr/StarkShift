@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 from arc import Hydrogen
 from atomphys import Atom
-from StarkShift.AxialBeams import BottleBeam
+from StarkShift.AxialBeams import BottleBeam, GaussianBeam
 
 
 # Import the functions to test
@@ -45,6 +45,9 @@ dmax = 6 * ureg('um')
 
 bob = BottleBeam(P, k, a, NA, r0, ureg, dmax, 101)
 
+w0 = 10 * ureg('um')
+gaussian = GaussianBeam(P, k, w0, r0, ureg)
+
 # Define the polarization of the laser relative to it's k-vector
 epsilon = 'x'
 
@@ -52,8 +55,14 @@ epsilon = 'x'
 class TestStarkShiftUtil(unittest.TestCase):
     """Test Stark shift utilities. """
 
-    def test_find_trap_depth(self):
-        """Test the function which finds the trap depth. """
+    def test_find_trap_depth_bottle_beam(self):
+        """Test the function which finds the trap depth for a bottle beam. """
 
         r_saddle, phi_saddle, U_saddle, trap_depth = find_trap_depth(state_c, arc_atom, state_r, j, mj, bob, epsilon)
-        logging.info(f'find_trap_depth: {r_saddle=}, {phi_saddle=}, {U_saddle=}, {trap_depth=}')
+        logging.info(f'find_trap_depth_bottle_beam: {r_saddle=}, {phi_saddle=}, {U_saddle=}, {trap_depth=}')
+
+    def test_find_trap_depth_gaussian_beam(self):
+        """Test the function which finds the trap depth for a gaussian beam. """
+
+        trap_depth = find_trap_depth(state_c, arc_atom, state_r, j, mj, gaussian, epsilon)
+        logging.info(f'find_trap_depth_gaussian_beam: {trap_depth=}')
