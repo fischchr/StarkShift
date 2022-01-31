@@ -165,7 +165,8 @@ def _find_saddle_point_radius(beam, phi_saddle: float, verbose: bool = True) -> 
         r_saddle *= ureg('um')
         I_saddle *= ureg('mW/um^2')
     except ValueError:
-        plt.show()
+        if verbose:
+            plt.show()
         raise ValueError(f'Could not find saddle point. Increase {beam._dmax=}.')
 
     if verbose:
